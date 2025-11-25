@@ -1,0 +1,523 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@custom-variant dark (&: is(.dark *));
+
+/* ========= THEME TOKENS ========= */
+:root {
+  /* Brand (InJourney-ish) */
+  --brand-navy: #144a7c;
+  --brand-sky: #16a3d8;
+  --brand-k3: #ffc832;
+
+  /* Semantic */
+  --border: oklch(0.922 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-fg: #6b7280;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --font-geist-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter,
+    Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  --radius: 0.75rem;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+
+  --muted-foreground: oklch(0.556 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* Optional dark (kalau mau dipakai nanti) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --border: #1f2937;
+    --muted: #0f1115;
+    --muted-fg: #9ca3af;
+  }
+}
+
+/* ========= MAP KE TAILWIND via @theme ========= */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-fg);
+
+  --color-primary: var(--brand-navy);
+  --color-secondary: var(--brand-sky);
+  --color-accent: var(--brand-k3);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: 1rem;
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ========= BASE RESET ========= */
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ========= APP HELPERS ========= */
+.container-page {
+  @apply mx-auto max-w-6xl px-4;
+}
+
+/* supaya class bg-page di <main> gak error */
+.bg-page {
+  background: var(--background);
+}
+
+/* Card generic */
+.card {
+  @apply bg-background border border-border/80 rounded-2xl;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+}
+
+/* Badges status */
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium;
+}
+.badge-open {
+  @apply border-danger/20 text-danger bg-danger/10;
+}
+.badge-progress {
+  @apply border-warning/20 text-warning bg-warning/10;
+}
+.badge-closed {
+  @apply border-success/20 text-success bg-success/10;
+}
+
+/* Simple buttons */
+.btn {
+  @apply inline-flex items-center justify-center border rounded-lg px-3.5 py-2.5 text-sm font-medium;
+}
+.btn-primary {
+  @apply bg-primary text-white hover:opacity-90;
+}
+.btn-secondary {
+  @apply bg-secondary text-white hover:opacity-90;
+}
+.btn-outline {
+  @apply bg-transparent border-border text-foreground hover:bg-muted/60;
+}
+
+/* ========= HERO BACKGROUND ========= */
+.hero-bg {
+  position: relative;
+  background: radial-gradient(
+      circle at top left,
+      rgba(20, 74, 124, 0.2),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(22, 163, 216, 0.18),
+      transparent 60%
+    ),
+    linear-gradient(to bottom, #f5f7fb 0%, #ffffff 40%, #ffffff 100%);
+  overflow: hidden;
+}
+
+.hero-bg::before,
+.hero-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-bg::before {
+  background: linear-gradient(135deg, rgba(20, 74, 124, 0.12), transparent 55%);
+  opacity: 0.65;
+}
+
+.hero-bg::after {
+  background: radial-gradient(
+      circle at 70% 20%,
+      rgba(255, 255, 255, 0.8),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 90% 60%,
+      rgba(22, 163, 216, 0.08),
+      transparent 60%
+    );
+  opacity: 0.9;
+}
+
+.hero-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========= STEPS LINE (alur proses) ========= */
+.steps-line {
+  position: absolute;
+  top: 40px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(148, 163, 184, 0.2),
+    rgba(148, 163, 184, 0.8),
+    rgba(148, 163, 184, 0.2)
+  );
+  z-index: 0;
+}
+
+.step-card {
+  @apply flex flex-col items-center gap-3 text-center;
+  position: relative;
+  z-index: 1;
+}
+
+.step-icon-wrapper {
+  @apply flex items-center justify-center;
+}
+
+.step-icon {
+  @apply flex items-center justify-center rounded-full bg-white border border-slate-200 shadow-md;
+  width: 64px;
+  height: 64px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.18);
+}
+
+@media (max-width: 767px) {
+  .steps-line {
+    display: none;
+  }
+
+  .step-card {
+    @apply items-start text-left;
+  }
+
+  .step-icon {
+    width: 52px;
+    height: 52px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  }
+}
+
+/* ========= BAND PRIMARY (Top Reporter) ========= */
+.band-primary {
+  position: relative;
+  background: linear-gradient(135deg, #144a7c 0%, #16a3d8 45%, #0b3456 100%);
+  color: #f9fafb;
+  overflow: hidden;
+}
+
+.band-primary::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 55%
+    ),
+    linear-gradient(-120deg, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.band-primary > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========= DOT TEXTURE (ringkasan laporan) ========= */
+.texture-dots {
+  position: relative;
+  overflow: hidden;
+}
+
+.texture-dots::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(148, 163, 184, 0.25) 1px,
+    transparent 0
+  );
+  background-size: 16px 16px;
+  opacity: 0.4;
+  mask-image: radial-gradient(circle at top, black, transparent 65%);
+  -webkit-mask-image: radial-gradient(circle at top, black, transparent 65%);
+  pointer-events: none;
+}
+
+.texture-dots > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========= K3 GLASS CARD (hero form) ========= */
+/* ========= K3 GLASS CARD (hero form) ========= */
+.k3-card-shell {
+  position: relative;
+  border-radius: 28px;
+  padding: 22px 22px 20px;
+  background: radial-gradient(
+      circle at 0% 0%,
+      rgba(56, 189, 248, 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 120% 0%,
+      rgba(59, 130, 246, 0.18),
+      transparent 55%
+    ),
+    rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.7), 0 0 0 1px rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  color: #e5e7eb;
+  max-width: 620px;
+  min-height: 320px; /* supaya nggak gepeng */
+}
+
+.k3-card-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 10% 0%,
+    rgba(248, 250, 252, 0.14),
+    transparent 55%
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.k3-card-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* jarak section */
+  font-size: 13px;
+}
+
+/* header atas (Preview + badge status) */
+.k3-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  color: #d1d5db;
+}
+
+.k3-card-meta-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.k3-card-pill {
+  border-radius: 999px;
+  border: 1px solid rgba(248, 250, 252, 0.18);
+  background: rgba(15, 23, 42, 0.92);
+  color: #e5e7eb;
+  padding: 5px 12px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* tiap section di dalam form */
+.k3-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.k3-card-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e5e7eb;
+}
+
+/* lokasi temuan pill – glassy dan full width */
+.k3-card-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 9px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.9),
+    rgba(30, 64, 175, 0.8)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.65);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #e5e7eb;
+  font-size: 13px;
+  width: 100%;
+}
+
+/* area chips jenis temuan */
+.k3-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* area foto pendukung */
+.k3-card-photos {
+  display: flex;
+  gap: 10px;
+}
+
+.k3-card-photo-slot {
+  flex: 1;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(30, 64, 175, 0.6);
+}
+
+/* baris bawah: SLA + tombol */
+.k3-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.k3-card-footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.k3-card-footer-left span:first-child {
+  color: #d1d5db;
+}
+
+.k3-card-footer-left span:last-child {
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+/* responsif kecil: stack footer */
+@media (max-width: 480px) {
+  .k3-card-shell {
+    padding: 18px 16px 18px;
+    border-radius: 22px;
+    min-height: 0;
+  }
+
+  .k3-card-inner {
+    gap: 16px;
+  }
+
+  .k3-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.input {
+  @apply w-full px-3 py-2 border border-slate-300 rounded-lg text-sm 
+         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+         bg-white;
+}

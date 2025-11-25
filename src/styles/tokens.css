@@ -1,0 +1,95 @@
+/* src/styles/tokens.css */
+
+:root {
+  /* Warna dasar */
+  --page-bg: #020617; /* slate-950 */
+  --page-bg-soft: #020617;
+  --card-bg: #ffffff;
+  --card-border: rgba(148, 163, 184, 0.6);
+
+  --danger: #ef4444;
+  --danger-soft: rgba(248, 113, 113, 0.08);
+  --danger-border: rgba(239, 68, 68, 0.3);
+
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.08);
+  --warning-border: rgba(245, 158, 11, 0.3);
+
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.08);
+  --success-border: rgba(34, 197, 94, 0.3);
+
+  --ring-soft: rgba(56, 189, 248, 0.35);
+}
+
+/* Utility layout untuk halaman main */
+@layer utilities {
+  .bg-page {
+    /* background halus, mirip dashboard modern */
+    background: radial-gradient(
+        circle at top,
+        rgba(56, 189, 248, 0.18),
+        transparent 55%
+      ),
+      radial-gradient(circle at bottom, #020617, #020617);
+  }
+
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* Komponen global kecil */
+@layer components {
+  .card {
+    @apply rounded-3xl border border-slate-200/70 bg-white/95 shadow-sm;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-sky-600 px-3.5 py-2 text-white shadow-sm hover:bg-sky-700 disabled:bg-sky-400/70;
+  }
+
+  .btn-outline {
+    @apply border border-slate-200 bg-white px-3.5 py-2 text-slate-700 hover:bg-slate-50;
+  }
+
+  .text-danger {
+    color: var(--danger);
+  }
+
+  .text-warning {
+    color: var(--warning);
+  }
+
+  .text-success {
+    color: var(--success);
+  }
+
+  .bg-danger\/5 {
+    background-color: var(--danger-soft);
+  }
+
+  .bg-warning\/5 {
+    background-color: var(--warning-soft);
+  }
+
+  .bg-success\/5 {
+    background-color: var(--success-soft);
+  }
+
+  .border-danger\/30 {
+    border-color: var(--danger-border);
+  }
+
+  .border-warning\/30 {
+    border-color: var(--warning-border);
+  }
+
+  .border-success\/30 {
+    border-color: var(--success-border);
+  }
+}
