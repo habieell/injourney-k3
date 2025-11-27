@@ -1,32 +1,51 @@
 // src/hooks/useFindingDetail.ts
+"use client";
+
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { FindingStatus, FindingSeverity } from "./useFindings";
+import type { Database } from "@/types/db";
+
+type FindingRow = Database["public"]["Tables"]["findings"]["Row"];
+
+export type FindingStatus = Database["public"]["Enums"]["finding_status"];
+export type FindingSeverity = Database["public"]["Enums"]["severity_level"];
 
 export type FindingDetail = {
     id: string;
-    sheetRowId: string | null;
+
+    // basic info
     title: string | null;
     description: string | null;
     impact: string | null;
     recommendation: string | null;
     mitigation: string | null;
-    unitPic: string | null;
+
+    // status & severity
     status: FindingStatus;
     severity: FindingSeverity;
-    slaHours: number | null;
-    source: string | null;
-    inspectionDate: string | null;
-    shift: string | null;
-    startTime: string | null;
-    endTime: string | null;
-    createdAt: string;
-    closedAt: string | null;
 
+    // SLA & PIC
+    slaHours: number | null;
+    unitPic: string | null;
+
+    // lokasi (join)
     airportName: string | null;
     terminalName: string | null;
     zoneName: string | null;
     locationName: string | null;
+
+    // inspector (optional)
+    inspectorName: string | null;
+
+    // waktu & meta
+    inspectionDate: string | null; // yyyy-mm-dd
+    shift: Database["public"]["Enums"]["shift_type"] | null;
+    startTime: string | null;
+    endTime: string | null;
+    createdAt: string;
+    closedAt: string | null;
+    source: string | null;
+    sheetRowId: string | null;
 };
 
 type UseFindingDetailResult = {
@@ -35,16 +54,24 @@ type UseFindingDetailResult = {
     error: string | null;
 };
 
-export function useFindingDetail(id: string | undefined): UseFindingDetailResult {
+type RawFindingWithRelations = FindingRow & {
+    airports?: { name: string } | null;
+    terminals?: { name: string } | null;
+    zones?: { name: string } | null;
+    locations?: { name: string } | null;
+    profiles?: { full_name: string } | null; // inspector
+};
+
+export function useFindingDetail(id: string): UseFindingDetailResult {
     const [finding, setFinding] = useState<FindingDetail | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // kalau belum ada id (initial render), jangan fetch dulu
         if (!id) {
             setFinding(null);
             setLoading(false);
+            setError("ID temuan tidak valid.");
             return;
         }
 
@@ -60,38 +87,43 @@ export function useFindingDetail(id: string | undefined): UseFindingDetailResult
                 const { data, error } = await supabase
                     .from("findings")
                     .select(
-                        [
-                            "id",
-                            "sheet_row_id",
-                            "title",
-                            "description",
-                            "impact",
-                            "recommendation",
-                            "mitigation",
-                            "unit_pic",
-                            "status",
-                            "severity",
-                            "sla_hours",
-                            "source",
-                            "inspection_date",
-                            "shift",
-                            "start_time",
-                            "end_time",
-                            "created_at",
-                            "closed_at",
-                            // relasi opsional – hapus kalau belum ada
-                            "airports(name)",
-                            "terminals(name)",
-                            "zones(name)",
-                            "locations(name)",
-                        ].join(",")
+                        `
+              id,
+              inspector_id,
+              airport_id,
+              terminal_id,
+              zone_id,
+              location_id,
+              inspection_date,
+              shift,
+              start_time,
+              end_time,
+              title,
+              description,
+              impact,
+              recommendation,
+              mitigation,
+              unit_pic,
+              status,
+              severity,
+              sla_hours,
+              closed_at,
+              source,
+              sheet_row_id,
+              created_at,
+              updated_at,
+              airports ( name ),
+              terminals ( name ),
+              zones ( name ),
+              locations ( name ),
+              profiles:profiles!findings_inspector_id_fkey ( full_name )
+            `
                     )
-                    // di sini kita pakai id as string biar TS happy
-                    .eq("id", id as string)
+                    .eq("id", id)
                     .maybeSingle();
 
                 if (error) {
-                    console.error("useFindingDetail error", error);
+                    console.error("[useFindingDetail] Supabase error:", error);
                     throw error;
                 }
 
@@ -99,68 +131,50 @@ export function useFindingDetail(id: string | undefined): UseFindingDetailResult
 
                 if (!data) {
                     setFinding(null);
-                    setError("Data temuan tidak ditemukan.");
+                    setError("Temuan tidak ditemukan.");
                     return;
                 }
 
-                // definisikan bentuk row dari Supabase secara eksplisit
-                type RawFindingRow = {
-                    id: string;
-                    sheet_row_id: string | null;
-                    title: string | null;
-                    description: string | null;
-                    impact: string | null;
-                    recommendation: string | null;
-                    mitigation: string | null;
-                    unit_pic: string | null;
-                    status: FindingStatus | null;
-                    severity: FindingSeverity | null;
-                    sla_hours: number | null;
-                    source: string | null;
-                    inspection_date: string | null;
-                    shift: string | null;
-                    start_time: string | null;
-                    end_time: string | null;
-                    created_at: string;
-                    closed_at: string | null;
-                    airports?: { name: string | null } | null;
-                    terminals?: { name: string | null } | null;
-                    zones?: { name: string | null } | null;
-                    locations?: { name: string | null } | null;
-                };
-
-                const row = data as unknown as RawFindingRow;
+                const row = data as RawFindingWithRelations;
 
                 const mapped: FindingDetail = {
                     id: row.id,
-                    sheetRowId: row.sheet_row_id ?? null,
+
                     title: row.title ?? null,
                     description: row.description ?? null,
                     impact: row.impact ?? null,
                     recommendation: row.recommendation ?? null,
                     mitigation: row.mitigation ?? null,
-                    unitPic: row.unit_pic ?? null,
+
                     status: (row.status ?? "open") as FindingStatus,
                     severity: (row.severity ?? "low") as FindingSeverity,
+
                     slaHours: row.sla_hours ?? null,
-                    source: row.source ?? null,
+                    unitPic: row.unit_pic ?? null,
+
+                    airportName: row.airports?.name ?? null,
+                    terminalName: row.terminals?.name ?? null,
+                    zoneName: row.zones?.name ?? null,
+                    locationName: row.locations?.name ?? null,
+
+                    inspectorName: row.profiles?.full_name ?? null,
+
                     inspectionDate: row.inspection_date ?? null,
                     shift: row.shift ?? null,
                     startTime: row.start_time ?? null,
                     endTime: row.end_time ?? null,
                     createdAt: row.created_at,
-                    closedAt: row.closed_at ?? null,
-                    airportName: row.airports?.name ?? null,
-                    terminalName: row.terminals?.name ?? null,
-                    zoneName: row.zones?.name ?? null,
-                    locationName: row.locations?.name ?? null,
+                    closedAt: row.closed_at,
+                    source: row.source ?? null,
+                    sheetRowId: row.sheet_row_id ?? null,
                 };
 
                 setFinding(mapped);
             } catch (err) {
                 if (!cancelled) {
-                    console.error(err);
+                    console.error("[useFindingDetail] Unexpected error:", err);
                     setError("Gagal memuat detail temuan. Coba refresh halaman.");
+                    setFinding(null);
                 }
             } finally {
                 if (!cancelled) {
@@ -169,7 +183,7 @@ export function useFindingDetail(id: string | undefined): UseFindingDetailResult
             }
         }
 
-        load();
+        void load();
 
         return () => {
             cancelled = true;

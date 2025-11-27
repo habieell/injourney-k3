@@ -1,15 +1,16 @@
-// src/lib/permissions.ts
+// src/lib/auth/permission.ts
 import type { Database } from "@/types/db";
 
 type Tables = Database["public"]["Tables"];
 type Enums = Database["public"]["Enums"];
 
 export type AppRole = Enums["user_role"];
-// Pastikan enum di Supabase: 'admin' | 'inspector' | 'pic' | 'viewer'
+// Enum di Supabase: 'admin' | 'inspector' | 'pic' | 'viewer'
 
 export type ProfileRow = Tables["profiles"]["Row"];
 
-// 1) Daftar permission
+// ================== PERMISSIONS CORE ==================
+
 export type PermissionKey =
     | "finding:create"
     | "finding:update:any"
@@ -22,7 +23,6 @@ export type PermissionKey =
     | "admin:users"
     | "insight:view";
 
-// 2) Mapping role → perms
 const ROLE_PERMISSIONS: Record<AppRole, PermissionKey[]> = {
     admin: [
         "finding:create",
@@ -41,19 +41,15 @@ const ROLE_PERMISSIONS: Record<AppRole, PermissionKey[]> = {
         "insight:view",
     ],
     pic: [
+        "finding:update:any",
         "finding:update:assigned",
         "finding:view:assigned",
         "finding:export",
         "insight:view",
     ],
-    viewer: [
-        "finding:view:any",
-        "finding:export",
-        "insight:view",
-    ],
+    viewer: ["finding:view:any", "finding:export", "insight:view"],
 };
 
-// 3) Helper umum
 export function getRoleFromProfile(profile?: ProfileRow | null): AppRole {
     return (profile?.role as AppRole) ?? "viewer";
 }
@@ -68,7 +64,6 @@ export function hasPermission(
     return perms.includes(permission);
 }
 
-// Helper biar di komponen enak dipakai
 export const can = {
     accessAdminPanel: (role: AppRole | null | undefined) =>
         hasPermission(role, "admin:panel"),
@@ -100,3 +95,59 @@ export const can = {
     viewInsight: (role: AppRole | null | undefined) =>
         hasPermission(role, "insight:view"),
 };
+
+// ================== NAVBAR ITEMS ==================
+
+export type NavItem = {
+    key: string;
+    label: string;
+    href: string;
+    roles?: AppRole[]; // kalau mau limit per role, optional
+};
+
+export function getNavItemsForRole(
+    role: AppRole | null | undefined
+): NavItem[] {
+    if (!role) return [];
+
+    const items: NavItem[] = [];
+
+    // Dashboard – selalu ada buat semua user login
+    items.push({
+        key: "dashboard",
+        label: "Dashboard",
+        href: "/",
+    });
+
+    // Daftar temuan
+    items.push({
+        key: "findings",
+        label: "Laporkan Temuan",
+        href: "/findings",
+    });
+
+    // Tugas (untuk inspector + PIC, viewer boleh lihat juga kalau mau)
+    items.push({
+        key: "tasks",
+        label: "Tugas",
+        href: "/tasks",
+    });
+
+    // Pengaturan (profil / preferensi user)
+    items.push({
+        key: "settings",
+        label: "Pengaturan",
+        href: "/settings",
+    });
+
+    // Admin panel – hanya role admin
+    if (can.accessAdminPanel(role)) {
+        items.push({
+            key: "admin",
+            label: "Admin",
+            href: "/admin",
+        });
+    }
+
+    return items;
+}

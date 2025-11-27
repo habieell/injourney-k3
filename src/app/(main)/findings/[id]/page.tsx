@@ -1,4 +1,3 @@
-// src/app/(main)/findings/[id]/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -63,8 +62,6 @@ export default function FindingDetailPage() {
 
   // ====== PERMISSION UPDATE STATUS ======
   const canUpdateAny = can.updateAnyFinding(role);
-  // TODO: kalau nanti ada field assignment ke PIC, bisa tambahin:
-  // const canUpdateAssigned = can.updateAssignedFinding(role) && finding?.assignedPicId === profile?.id;
   const canUpdateStatus = canUpdateAny;
 
   // === UPDATE STATUS KE SUPABASE ===
@@ -94,7 +91,6 @@ export default function FindingDetailPage() {
         throw updateError;
       }
 
-      // simple: reload halaman supaya data hook ke-refresh
       window.location.reload();
     } catch (err: unknown) {
       console.error("Update status error:", err);
@@ -103,6 +99,12 @@ export default function FindingDetailPage() {
       setUpdating(false);
     }
   };
+
+  const sheetOrId = finding?.sheetRowId ?? finding?.id ?? "Detail temuan";
+
+  // hanya boleh buat task kalau temuan belum closed
+  const canCreateTaskFromFinding =
+    finding && (finding.status === "open" || finding.status === "in_progress");
 
   return (
     <AuthGuard>
@@ -115,9 +117,7 @@ export default function FindingDetailPage() {
                 Daftar temuan
               </Link>
               <span>/</span>
-              <span className="font-medium text-slate-900">
-                {finding?.sheetRowId ?? finding?.id ?? "Detail temuan"}
-              </span>
+              <span className="font-medium text-slate-900">{sheetOrId}</span>
             </div>
 
             <Link
@@ -176,36 +176,52 @@ export default function FindingDetailPage() {
                   <div className="text-[11px] text-slate-500">
                     ID Laporan:{" "}
                     <span className="font-mono font-medium text-slate-800">
-                      {finding.sheetRowId ?? finding.id}
+                      {sheetOrId}
                     </span>
                   </div>
 
-                  {/* Tombol update status – hanya kalau role punya izin */}
-                  {canUpdateStatus && (
-                    <div className="flex flex-wrap gap-1.5">
-                      <button
-                        disabled={updating || finding.status === "open"}
-                        onClick={() => handleUpdateStatus("open")}
-                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                  {/* Tombol update status + buat task */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {canUpdateStatus && (
+                      <>
+                        <button
+                          disabled={updating || finding.status === "open"}
+                          onClick={() => handleUpdateStatus("open")}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                        >
+                          Tandai Open
+                        </button>
+                        <button
+                          disabled={
+                            updating || finding.status === "in_progress"
+                          }
+                          onClick={() => handleUpdateStatus("in_progress")}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                        >
+                          Tandai In Progress
+                        </button>
+                        <button
+                          disabled={updating || finding.status === "closed"}
+                          onClick={() => handleUpdateStatus("closed")}
+                          className="rounded-full border border-emerald-500 bg-emerald-500 px-3 py-1 text-[11px] font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                        >
+                          Tandai Selesai
+                        </button>
+                      </>
+                    )}
+
+                    {/* === Buat task dari temuan ini === */}
+                    {canCreateTaskFromFinding && (
+                      <Link
+                        href={`/tasks/add?finding_id=${
+                          finding.id
+                        }&finding_code=${encodeURIComponent(sheetOrId)}`}
+                        className="rounded-full border border-sky-500 bg-white px-3 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-50"
                       >
-                        Tandai Open
-                      </button>
-                      <button
-                        disabled={updating || finding.status === "in_progress"}
-                        onClick={() => handleUpdateStatus("in_progress")}
-                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-                      >
-                        Tandai In Progress
-                      </button>
-                      <button
-                        disabled={updating || finding.status === "closed"}
-                        onClick={() => handleUpdateStatus("closed")}
-                        className="rounded-full border border-emerald-500 bg-emerald-500 px-3 py-1 text-[11px] font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
-                      >
-                        Tandai Selesai
-                      </button>
-                    </div>
-                  )}
+                        + Buat task dari temuan ini
+                      </Link>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -366,7 +382,6 @@ export default function FindingDetailPage() {
                 transition={{ duration: 0.3, ease: "easeOut", delay: 0.05 }}
                 className="space-y-4 md:space-y-5"
               >
-                {/* Ringkasan status */}
                 <div className="card rounded-3xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-700 shadow-sm sm:px-5 sm:py-5">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-900">

@@ -39,7 +39,7 @@ export default function FindingsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
 
-  // --- advanced filter state ---
+  // advanced filter
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>("");
   const [dateFrom, setDateFrom] = useState("");
@@ -96,7 +96,7 @@ export default function FindingsPage() {
     [findings]
   );
 
-  // === handler export ke API ===
+  // export handler
   const handleExport = async () => {
     if (!canExportFinding) {
       alert(
@@ -108,29 +108,17 @@ export default function FindingsPage() {
     try {
       const params = new URLSearchParams();
 
-      if (statusFilter !== "all") {
-        params.set("status", statusFilter);
-      }
-      if (search.trim()) {
-        params.set("q", search.trim());
-      }
-      if (severityFilter) {
-        params.set("severity", severityFilter);
-      }
-      if (dateFrom) {
-        params.set("date_from", dateFrom);
-      }
-      if (dateTo) {
-        params.set("date_to", dateTo);
-      }
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (search.trim()) params.set("q", search.trim());
+      if (severityFilter) params.set("severity", severityFilter);
+      if (dateFrom) params.set("date_from", dateFrom);
+      if (dateTo) params.set("date_to", dateTo);
 
       const res = await fetch(`/api/findings/export?${params.toString()}`, {
         method: "GET",
       });
 
-      if (!res.ok) {
-        throw new Error("Gagal export laporan");
-      }
+      if (!res.ok) throw new Error("Gagal export laporan");
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -143,14 +131,14 @@ export default function FindingsPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
+      console.error("[Findings] Export error:", err);
       alert("Terjadi kesalahan saat export laporan.");
     }
   };
 
   return (
-    <AuthGuard>
-      <main className="min-h-[calc(100vh-4rem)] bg-page pb-14 pt-6 md:pt-8 md:min-h-[calc(100vh-4.5rem)]">
+    <AuthGuard allowedRoles={["admin", "inspector", "pic", "viewer"]}>
+      <main className="min-h-[calc(100vh-4rem)] bg-page pb-14 pt-6 md:min-h-[calc(100vh-4.5rem)] md:pt-8">
         <section className="container-page">
           {/* Header + CTA */}
           <div className="mb-6 flex flex-col gap-3 md:mb-8 md:flex-row md:items-center md:justify-between">
@@ -537,7 +525,6 @@ export default function FindingsPage() {
                   Timeline temuan
                 </div>
 
-                {/* pakai komponen timeline yang sudah ada */}
                 <FindingTimeline />
 
                 <p className="mt-2 text-[10px] text-slate-400">

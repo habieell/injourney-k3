@@ -1,7 +1,10 @@
+// src/components/layout/MobileNav.tsx
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
+import type { NavItem } from "@/lib/auth/permission";
 
 type MobileNavProps = {
   open: boolean;
@@ -9,17 +12,10 @@ type MobileNavProps = {
   isAuthenticated: boolean;
   displayName: string;
   displayRole: string;
-  onNavigateSection: (href: string) => void;
+  navItems: NavItem[];
+  onNavigate: (href: string) => void;
   onLogin: () => void; // kalau sudah login → dipakai sebagai logout
-  onReport: () => void;
-  onDashboard: () => void;
 };
-
-const navLinks = [
-  { href: "#fitur", label: "Fitur" },
-  { href: "#cara-kerja", label: "Cara Kerja" },
-  { href: "#insight", label: "Insight" },
-];
 
 export function MobileNav({
   open,
@@ -27,13 +23,21 @@ export function MobileNav({
   isAuthenticated,
   displayName,
   displayRole,
-  onNavigateSection,
+  navItems,
+  onNavigate,
   onLogin,
-  onReport,
-  onDashboard,
 }: MobileNavProps) {
-  const handleClickSection = (href: string) => {
-    onNavigateSection(href);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/" || pathname.startsWith("/findings");
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const handleClickNav = (href: string) => {
+    onNavigate(href);
     setOpen(false);
   };
 
@@ -72,68 +76,43 @@ export function MobileNav({
                 Menu
               </div>
 
-              {/* Nav links */}
-              <nav className="flex flex-col gap-2 text-sm">
-                {navLinks.map((link) => (
-                  <button
-                    key={link.href}
-                    onClick={() => handleClickSection(link.href)}
-                    className="w-full rounded-lg px-2 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50"
-                  >
-                    {link.label}
-                  </button>
-                ))}
-              </nav>
+              {isAuthenticated && (
+                <div className="mb-3 rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-600">
+                  {displayName}
+                  {displayRole && ` · ${displayRole}`}
+                </div>
+              )}
 
-              {/* User / actions */}
-              <div className="mt-4 flex flex-col gap-2">
-                {isAuthenticated ? (
-                  <>
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-600">
-                      {displayName}
-                      {displayRole && ` · ${displayRole}`}
-                    </div>
+              {/* Nav links */}
+              {isAuthenticated && (
+                <nav className="mb-4 flex flex-col gap-1 text-sm">
+                  {navItems.map((item) => (
                     <button
-                      className="btn btn-outline w-full h-9 text-[11px]"
-                      onClick={() => {
-                        onDashboard();
-                        setOpen(false);
-                      }}
+                      key={item.key}
+                      onClick={() => handleClickNav(item.href)}
+                      className={`w-full rounded-lg px-2 py-2 text-left text-xs font-medium ${
+                        isActive(item.href)
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
                     >
-                      Buka Dashboard
+                      {item.label}
                     </button>
-                    <button
-                      className="btn btn-primary w-full h-9 text-[11px]"
-                      onClick={() => {
-                        onLogin(); // logout
-                        setOpen(false);
-                      }}
-                    >
-                      Keluar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className="btn btn-outline w-full h-9 text-[11px]"
-                      onClick={() => {
-                        onLogin(); // login
-                        setOpen(false);
-                      }}
-                    >
-                      Masuk Sistem
-                    </button>
-                    <button
-                      className="btn btn-primary w-full h-9 text-[11px]"
-                      onClick={() => {
-                        onReport();
-                        setOpen(false);
-                      }}
-                    >
-                      Laporkan Temuan
-                    </button>
-                  </>
-                )}
+                  ))}
+                </nav>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2">
+                <button
+                  className="btn btn-primary h-9 w-full text-[11px]"
+                  onClick={() => {
+                    onLogin();
+                    setOpen(false);
+                  }}
+                >
+                  {isAuthenticated ? "Keluar" : "Masuk Sistem"}
+                </button>
               </div>
             </motion.div>
           </motion.div>

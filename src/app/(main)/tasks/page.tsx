@@ -2,15 +2,12 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { TaskList } from "@/components/tasks/TaskList";
+import { TaskList } from "@/components/task/TaskList";
 
 export default function TasksPage() {
   return (
-    <AuthGuard>
-      <main className="container-page py-8">
-        <h1 className="mb-4 text-xl font-semibold text-slate-900">
-          Daftar Tugas Tindak Lanjut
-        </h1>
+    <AuthGuard allowedRoles={["admin", "inspector", "pic", "viewer"]}>
+      <main className="min-h-[calc(100vh-4rem)] bg-page pb-14 pt-6 md:min-h-[calc(100vh-4.5rem)] md:pt-8">
         <TaskList />
       </main>
     </AuthGuard>

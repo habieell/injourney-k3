@@ -8,10 +8,6 @@ export type Json =
     | { [key: string]: Json | undefined }
     | Json[];
 
-/**
- * Supabase typed Database schema
- * – Public schema only
- */
 export type Database = {
     public: {
         Tables: {
@@ -330,6 +326,81 @@ export type Database = {
                     }
                 ];
             };
+
+            // ======= TASKS =======
+            tasks: {
+                Row: {
+                    id: string;
+                    code: string | null;
+                    title: string;
+                    description: string | null;
+                    finding_id: string | null;
+                    finding_code: string | null;
+                    location_id: string | null;
+                    area_text: string | null;
+                    owner_unit: string | null;
+                    owner_profile_id: string | null;
+                    due_at: string | null; // timestamptz
+                    status: Database["public"]["Enums"]["task_status"];
+                    priority: Database["public"]["Enums"]["task_priority"];
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    code?: string | null;
+                    title: string;
+                    description?: string | null;
+                    finding_id?: string | null;
+                    finding_code?: string | null;
+                    location_id?: string | null;
+                    area_text?: string | null;
+                    owner_unit?: string | null;
+                    owner_profile_id?: string | null;
+                    due_at?: string | null;
+                    status?: Database["public"]["Enums"]["task_status"];
+                    priority?: Database["public"]["Enums"]["task_priority"];
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    code?: string | null;
+                    title?: string;
+                    description?: string | null;
+                    finding_id?: string | null;
+                    finding_code?: string | null;
+                    location_id?: string | null;
+                    area_text?: string | null;
+                    owner_unit?: string | null;
+                    owner_profile_id?: string | null;
+                    due_at?: string | null;
+                    status?: Database["public"]["Enums"]["task_status"];
+                    priority?: Database["public"]["Enums"]["task_priority"];
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: "tasks_finding_id_fkey";
+                        columns: ["finding_id"];
+                        referencedRelation: "findings";
+                        referencedColumns: ["id"];
+                    },
+                    {
+                        foreignKeyName: "tasks_location_id_fkey";
+                        columns: ["location_id"];
+                        referencedRelation: "locations";
+                        referencedColumns: ["id"];
+                    },
+                    {
+                        foreignKeyName: "tasks_owner_profile_id_fkey";
+                        columns: ["owner_profile_id"];
+                        referencedRelation: "profiles";
+                        referencedColumns: ["id"];
+                    }
+                ];
+            };
         };
 
         Views: {
@@ -346,6 +417,8 @@ export type Database = {
             severity_level: "low" | "medium" | "high" | "critical";
             shift_type: "pagi" | "siang" | "malam";
             user_role: "admin" | "inspector" | "viewer" | "pic";
+            task_status: "open" | "in_progress" | "done";
+            task_priority: "low" | "medium" | "high";
         };
 
         CompositeTypes: {
@@ -354,7 +427,7 @@ export type Database = {
     };
 };
 
-// Helper generic types (optional but handy)
+// Helper generic types
 export type PublicSchema = Database["public"];
 
 export type Tables<

@@ -1,30 +1,42 @@
+// src/app/(main)/page.tsx
 "use client";
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
+import { Images } from "@/assets/images";
+
 import PreviewFormCard from "@/components/landing/PreviewFormCard";
 import { useLandingStats } from "@/hooks/useLandingStats";
 
 const steps = [
   {
+    key: "write",
     title: "Tulis Laporan",
     desc: "Catat temuan atau potensi bahaya K3 dengan jelas dan lengkap.",
-    icon: "📝",
+    icon: Images.laporan,
+    alt: "Ikon tulis laporan",
   },
   {
+    key: "verify",
     title: "Proses Verifikasi",
     desc: "Laporan diverifikasi petugas K3 dan diteruskan ke unit terkait.",
-    icon: "✅",
+    icon: Images.checklist,
+    alt: "Ikon verifikasi checklist",
   },
   {
+    key: "followup",
     title: "Tindak Lanjut",
     desc: "Unit terkait melakukan perbaikan dan update status secara berkala.",
-    icon: "📍",
+    icon: Images.pin,
+    alt: "Ikon lokasi tindak lanjut",
   },
   {
+    key: "done",
     title: "Selesai",
     desc: "Temuan terdokumentasi rapi sebagai bukti pemenuhan K3.",
-    icon: "🎉",
+    icon: Images.confetti,
+    alt: "Ikon selebrasi selesai",
   },
 ];
 
@@ -36,7 +48,6 @@ function formatPercent(value: number | undefined) {
 function formatAvgSlaDays(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return "–";
   const fixed = value.toFixed(1);
-  // pakai format Indonesia, koma
   return fixed.replace(".", ",");
 }
 
@@ -159,31 +170,67 @@ export default function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="steps-line" />
+            {/* horizontal line hanya di desktop */}
+            <div className="pointer-events-none absolute left-[8%] right-[8%] top-12 hidden h-[2px] bg-sky-100 md:block" />
+
             <div className="grid gap-8 md:grid-cols-4">
               {steps.map((step, idx) => (
                 <motion.div
-                  key={step.title}
-                  className="step-card"
+                  key={step.key}
+                  className="relative flex flex-col items-center text-center group cursor-default"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.5 }}
-                  transition={{ duration: 0.3, delay: 0.1 * idx }}
+                  viewport={{ once: true, amount: 0.4 }}
+                  transition={{ duration: 0.3, delay: 0.08 * idx }}
                 >
-                  <div className="step-icon-wrapper">
-                    <div className="step-icon">
-                      <span className="text-xl md:text-2xl">{step.icon}</span>
+                  {/* Icon circle */}
+                  <div
+                    className="
+    relative mb-3
+    flex h-14 w-14 md:h-16 md:w-16 items-center justify-center
+    rounded-full bg-white
+    shadow-[0_6px_18px_rgba(15,23,42,0.06)]
+    ring-2 ring-sky-100
+    transition-all duration-200
+    group-hover:scale-105
+    group-hover:ring-sky-400/80
+    group-hover:shadow-[0_10px_28px_rgba(37,99,235,0.24)]
+  "
+                  >
+                    <div className="relative h-7 w-7 md:h-8 md:w-8">
+                      <Image
+                        src={step.icon}
+                        alt={step.alt}
+                        fill
+                        className="object-contain transition-transform duration-200 group-hover:scale-105"
+                        sizes="(max-width: 768px) 28px, 32px"
+                      />
                     </div>
                   </div>
+
+                  {/* Text */}
                   <div className="space-y-1">
-                    <h3 className="text-sm font-semibold md:text-base">
+                    <h3
+                      className="
+            text-sm font-semibold md:text-base
+            transition-colors duration-200
+            group-hover:text-sky-700
+          "
+                    >
                       {step.title}
                     </h3>
-                    <p className="text-xs leading-relaxed text-slate-500 md:text-[13px]">
+                    <p className="max-w-xs text-xs leading-relaxed text-slate-500 md:text-[13px]">
                       {step.desc}
                     </p>
                   </div>
-                  <div className="mt-1 text-[11px] font-medium text-sky-700">
+
+                  <div
+                    className="
+          mt-2 text-[11px] font-medium text-sky-700
+          transition-colors duration-200
+          group-hover:text-sky-800
+        "
+                  >
                     Langkah {idx + 1}
                   </div>
                 </motion.div>
@@ -256,7 +303,6 @@ export default function HomePage() {
                 <div className="text-xs font-medium tracking-wide text-slate-500">
                   JUMLAH LAPORAN TEREKAM
                 </div>
-                {/* di sini masih dummy, nanti bisa disambungin juga */}
                 <div className="text-3xl font-semibold text-sky-700 md:text-4xl">
                   9.214
                 </div>

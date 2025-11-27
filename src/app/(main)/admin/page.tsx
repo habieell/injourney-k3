@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/db";
@@ -23,41 +24,55 @@ export default function AdminPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadMasterData() {
-      setLoading(true);
-      setErrorMsg(null);
+    const loadMasterData = async () => {
+      try {
+        setLoading(true);
+        setErrorMsg(null);
 
-      const [
-        { data: tData, error: tErr },
-        { data: zData, error: zErr },
-        { data: lData, error: lErr },
-      ] = await Promise.all([
-        supabase
-          .from("terminals")
-          .select("*")
-          .order("name", { ascending: true }),
-        supabase.from("zones").select("*").order("name", { ascending: true }),
-        supabase
-          .from("locations")
-          .select("*")
-          .order("name", { ascending: true }),
-      ]);
+        const [
+          { data: tData, error: tErr },
+          { data: zData, error: zErr },
+          { data: lData, error: lErr },
+        ] = await Promise.all([
+          supabase
+            .from("terminals")
+            .select("*")
+            .order("name", { ascending: true }),
+          supabase.from("zones").select("*").order("name", { ascending: true }),
+          supabase
+            .from("locations")
+            .select("*")
+            .order("name", { ascending: true }),
+        ]);
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (tErr || zErr || lErr) {
-        console.error("Failed load master data", { tErr, zErr, lErr });
+        if (tErr || zErr || lErr) {
+          console.error("[AdminPage] Failed load master data", {
+            tErr,
+            zErr,
+            lErr,
+          });
+          setErrorMsg(
+            "Gagal memuat master data area. Coba refresh beberapa saat lagi."
+          );
+        }
+
+        setTerminals(tData ?? []);
+        setZones(zData ?? []);
+        setLocations(lData ?? []);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[AdminPage] Unexpected error load master data:", err);
         setErrorMsg(
-          "Gagal memuat master data area. Coba refresh beberapa saat lagi."
+          "Terjadi kesalahan saat memuat data. Coba refresh beberapa saat lagi."
         );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-
-      setTerminals(tData ?? []);
-      setZones(zData ?? []);
-      setLocations(lData ?? []);
-
-      setLoading(false);
-    }
+    };
 
     void loadMasterData();
 
@@ -70,7 +85,7 @@ export default function AdminPage() {
 
   return (
     <AuthGuard allowedRoles={["admin"]}>
-      <main className="container-page py-8 space-y-8">
+      <main className="container-page space-y-8 py-8">
         {/* Header */}
         <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -169,7 +184,7 @@ export default function AdminPage() {
         {!loading && (
           <section className="grid gap-6 lg:grid-cols-3">
             {/* Kiri: terminals */}
-            <div className="lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-1">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">
@@ -231,7 +246,7 @@ export default function AdminPage() {
             </div>
 
             {/* Tengah: zones */}
-            <div className="lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-1">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Zona</h2>
@@ -288,7 +303,7 @@ export default function AdminPage() {
             </div>
 
             {/* Kanan: locations */}
-            <div className="lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-1">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">

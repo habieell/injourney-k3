@@ -1,3 +1,4 @@
+// src/hooks/useAuth.tsx
 "use client";
 
 import {
@@ -11,14 +12,11 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/db";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-
-export type UserRole = NonNullable<ProfileRow["role"]>;
-
-type RoleInContext = UserRole | null;
+export type UserRole = Database["public"]["Enums"]["user_role"] | null;
 
 type AuthContextValue = {
   profile: ProfileRow | null;
-  role: RoleInContext;
+  role: UserRole;
   loading: boolean; // true = lagi cek session
   isAuthenticated: boolean; // true kalau sudah ada profile
   signOut: () => Promise<void>;
@@ -36,7 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
-      // 1. cek session
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -46,7 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // 2. ambil profile dari tabel "profiles"
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -69,18 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // pertama kali app jalan → cek session
     loadProfile();
 
-    // dengar perubahan auth (login / logout)
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!session) {
-          // logout
           setProfile(null);
           setLoading(false);
         } else {
-          // login / token refresh → reload profile
           loadProfile();
         }
       }
@@ -94,14 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    // langsung kosongin state
     setProfile(null);
     setLoading(false);
   };
 
   const value: AuthContextValue = {
     profile,
-    role: (profile?.role as UserRole | null) ?? null,
+    role: profile?.role ?? null,
     loading,
     isAuthenticated: !!profile,
     signOut: handleSignOut,
