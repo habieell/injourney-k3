@@ -29,11 +29,13 @@ function statusLabel(status: string) {
 export function FindingsPageView() {
   const { profile } = useAuth();
   const role = getRoleFromProfile(profile);
+  console.log(profile);
 
   const canCreateFinding = can.createFinding(role);
   const canExportFinding = can.exportFinding(role);
 
   const { findings, loading, error } = useFindings();
+  console.log("findings", findings);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");

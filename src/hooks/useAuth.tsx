@@ -41,8 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: sessionError,
       } = await supabase.auth.getSession();
 
-      console.log("[useAuth] session in browser:", session, sessionError);
-
       if (!session) {
         setProfile(null);
         return;
@@ -53,8 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("*")
         .eq("id", session.user.id)
         .single();
-
-      console.log("[useAuth] profile result:", { data, error });
 
       if (error || !data) {
         console.error("Load profile error:", error);

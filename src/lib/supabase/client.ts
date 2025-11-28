@@ -10,7 +10,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 let browserClient: TypedSupabaseClient | null = null;
 
 export function getSupabaseBrowserClient(): TypedSupabaseClient {
+    console.log('getSupabaseBrowserClient')
+    console.log('supabaseUrl : ', supabaseUrl)
+    console.log('supabaseAnonKey : ', supabaseAnonKey)
     if (!browserClient) {
+
         browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
             auth: {
                 persistSession: true,
