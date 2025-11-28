@@ -1,30 +1,29 @@
 // src/app/layout.tsx
-import type { ReactNode } from "react";
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
-
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
+import { Geist, Geist_Mono } from "next/font/google";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
 });
 
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+});
+
 export const metadata: Metadata = {
-  title: "Injourney K3 – Incident & Findings Reporting",
-  description: "Satu pintu laporan K3 di lingkungan bandara Soekarno-Hatta.",
+  title: "Injourney K3",
+  description: "Aplikasi monitoring temuan K3",
 };
 
-type RootLayoutProps = {
-  children: ReactNode;
-};
-
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="id">
       <body

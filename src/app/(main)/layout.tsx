@@ -11,7 +11,10 @@ type MainLayoutProps = {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <AuthGuard requireAuth>
+    <AuthGuard
+      requireAuth
+      allowedRoles={["admin", "inspector", "pic", "viewer"]}
+    >
       <div className="min-h-screen bg-slate-50">
         <MainNavbar />
         {children}
