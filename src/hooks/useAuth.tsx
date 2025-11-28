@@ -17,8 +17,8 @@ export type UserRole = Database["public"]["Enums"]["user_role"] | null;
 type AuthContextValue = {
   profile: ProfileRow | null;
   role: UserRole;
-  loading: boolean; // true = lagi cek session/profile
-  isAuthenticated: boolean; // true kalau ada session Supabase
+  loading: boolean;
+  isAuthenticated: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasSession, setHasSession] = useState(false); // <= NEW
+  const [hasSession, setHasSession] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -40,6 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error("getSession error:", sessionError);
+      }
+
+      // ⬇⬇⬇ PENTING: update flag session di sini
+      setHasSession(!!session);
 
       if (!session) {
         setProfile(null);
@@ -62,24 +69,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("loadProfile error:", err);
       setProfile(null);
+      setHasSession(false);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProfile();
+    // initial load profile + session
+    void loadProfile();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        // update flag session
+        // setiap ada perubahan session → update flag
         setHasSession(!!session);
 
         if (!session) {
           setProfile(null);
           setLoading(false);
         } else {
-          // session baru → muat ulang profile
+          // session baru → refresh profile
           void loadProfile();
         }
       }
@@ -102,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     role: profile?.role ?? null,
     loading,
-    isAuthenticated: hasSession, // <= PENTING: pakai session, bukan !!profile
+    isAuthenticated: hasSession,
     signOut: handleSignOut,
     refreshProfile: loadProfile,
   };
@@ -112,7 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  console.log(ctx);
   if (!ctx) {
     throw new Error("useAuth must be used inside AuthProvider");
   }
