@@ -1,6 +1,7 @@
+// src/app/(main)/findings/[id]/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -24,6 +25,16 @@ function statusLabel(status: string | null | undefined) {
   }
 }
 
+type TaskStatus = "open" | "in_progress" | "done";
+
+function mapFindingStatusToTaskStatus(
+  newStatus: "open" | "in_progress" | "closed"
+): TaskStatus {
+  if (newStatus === "closed") return "done";
+  if (newStatus === "in_progress") return "in_progress";
+  return "open";
+}
+
 export default function FindingDetailPage() {
   const params = useParams<{ id: string }>();
   const id = typeof params?.id === "string" ? params.id : "";
@@ -33,7 +44,9 @@ export default function FindingDetailPage() {
 
   const { finding, loading, error } = useFindingDetail(id);
   const supabase = getSupabaseBrowserClient();
+
   const [updating, setUpdating] = useState(false);
+  const [hasAnyTask, setHasAnyTask] = useState(false);
 
   const createdAtLabel = finding?.createdAt
     ? new Date(finding.createdAt).toLocaleString("id-ID", {
@@ -60,15 +73,61 @@ export default function FindingDetailPage() {
       ? finding.severity.toUpperCase()
       : "-";
 
-  // ====== PERMISSION UPDATE STATUS ======
+  // ===== PERMISSION =====
   const canUpdateAny = can.updateAnyFinding(role);
-  const canUpdateStatus = canUpdateAny;
+  const canUpdateAssigned = can.updateAssignedFinding(role);
+  const canUpdateStatus = canUpdateAny || canUpdateAssigned;
 
-  // === UPDATE STATUS KE SUPABASE ===
+  // id temuan yang stabil
+  const findingId: string | null = finding?.id ?? null;
+
+  // ===== CEK APAKAH SUDAH ADA TASK UNTUK FINDING INI =====
+  useEffect(() => {
+    if (!findingId) {
+      setHasAnyTask(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function checkTasks() {
+      try {
+        // setelah if (!findingId) return di atas, di sini aman → pakai as string
+        const idForQuery = findingId as string;
+
+        const { data, error: tasksError } = await supabase
+          .from("tasks")
+          .select("id")
+          .eq("finding_id", idForQuery)
+          .limit(1);
+
+        if (tasksError) {
+          console.error("[FindingDetail] checkTasks error:", tasksError);
+          return;
+        }
+
+        if (!cancelled) {
+          setHasAnyTask(!!data && data.length > 0);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("[FindingDetail] checkTasks unexpected error:", err);
+        }
+      }
+    }
+
+    void checkTasks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [findingId, supabase]);
+
+  // === UPDATE STATUS KE SUPABASE (FINDING + TASKS) ===
   const handleUpdateStatus = async (
     newStatus: "open" | "in_progress" | "closed"
   ) => {
-    if (!finding) return;
+    if (!finding || !findingId) return;
     if (!canUpdateStatus) {
       alert(
         "Peran kamu saat ini tidak memiliki akses untuk mengubah status temuan ini. Silakan hubungi admin K3."
@@ -79,18 +138,34 @@ export default function FindingDetailPage() {
     try {
       setUpdating(true);
 
+      // 1) update findings
       const { error: updateError } = await supabase
         .from("findings")
         .update({
           status: newStatus,
           closed_at: newStatus === "closed" ? new Date().toISOString() : null,
         })
-        .eq("id", finding.id);
+        .eq("id", findingId);
 
       if (updateError) {
         throw updateError;
       }
 
+      // 2) sync semua tasks terkait
+      const mappedTaskStatus = mapFindingStatusToTaskStatus(newStatus);
+      const { error: tasksError } = await supabase
+        .from("tasks")
+        .update({ status: mappedTaskStatus })
+        .eq("finding_id", findingId);
+
+      if (tasksError) {
+        console.error(
+          "[FindingDetail] update related tasks status error:",
+          tasksError
+        );
+      }
+
+      // 3) refresh UI
       window.location.reload();
     } catch (err: unknown) {
       console.error("Update status error:", err);
@@ -102,9 +177,13 @@ export default function FindingDetailPage() {
 
   const sheetOrId = finding?.sheetRowId ?? finding?.id ?? "Detail temuan";
 
-  // hanya boleh buat task kalau temuan belum closed
+  // tombol task hanya muncul kalau:
+  // - temuan belum closed
+  // - BELUM ada task untuk finding ini
   const canCreateTaskFromFinding =
-    finding && (finding.status === "open" || finding.status === "in_progress");
+    finding &&
+    !hasAnyTask &&
+    (finding.status === "open" || finding.status === "in_progress");
 
   return (
     <AuthGuard>
@@ -144,7 +223,7 @@ export default function FindingDetailPage() {
               </p>
             </div>
 
-            {/* Status chip + tombol action */}
+            {/* Status chip + action buttons */}
             <div className="flex flex-col items-start gap-2 text-xs md:items-end">
               <div>
                 {finding && (
@@ -180,7 +259,6 @@ export default function FindingDetailPage() {
                     </span>
                   </div>
 
-                  {/* Tombol update status + buat task */}
                   <div className="flex flex-wrap gap-1.5">
                     {canUpdateStatus && (
                       <>
@@ -210,7 +288,7 @@ export default function FindingDetailPage() {
                       </>
                     )}
 
-                    {/* === Buat task dari temuan ini === */}
+                    {/* tombol buat task: hanya kalau belum ada task & belum closed */}
                     {canCreateTaskFromFinding && (
                       <Link
                         href={`/tasks/add?finding_id=${
@@ -227,7 +305,7 @@ export default function FindingDetailPage() {
             </div>
           </div>
 
-          {/* Loading & error */}
+          {/* Loading / error / content */}
           {loading && (
             <div className="rounded-3xl border border-slate-200 bg-white/80 px-4 py-6 text-xs text-slate-500 shadow-sm sm:px-5">
               Memuat detail temuan dari Supabase…
@@ -242,14 +320,14 @@ export default function FindingDetailPage() {
 
           {!loading && !error && finding && (
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.1fr)]">
-              {/* Kolom kiri: detail utama */}
+              {/* Kolom kiri */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="space-y-4 md:space-y-5"
               >
-                {/* Ringkasan lokasi */}
+                {/* Lokasi */}
                 <div className="card rounded-3xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-700 shadow-sm sm:px-5 sm:py-5">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-900">
@@ -375,7 +453,7 @@ export default function FindingDetailPage() {
                 </div>
               </motion.div>
 
-              {/* Kolom kanan: ringkasan cepat */}
+              {/* Kolom kanan */}
               <motion.aside
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
