@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("getSession error:", sessionError);
       }
 
-      // ⬇⬇⬇ PENTING: update flag session di sini
+      // PENTING: update flag session di sini
       setHasSession(!!session);
 
       if (!session) {
@@ -76,19 +76,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // initial load profile + session
     void loadProfile();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        // setiap ada perubahan session → update flag
         setHasSession(!!session);
 
         if (!session) {
           setProfile(null);
           setLoading(false);
         } else {
-          // session baru → refresh profile
           void loadProfile();
         }
       }

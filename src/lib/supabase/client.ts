@@ -15,6 +15,7 @@ export function getSupabaseBrowserClient(): TypedSupabaseClient {
             auth: {
                 persistSession: true,
                 detectSessionInUrl: false,
+                storage: "cookie",
             },
         });
     }
