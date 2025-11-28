@@ -1,3 +1,4 @@
+// src/hooks/useAuth.tsx
 "use client";
 
 import {
@@ -16,8 +17,8 @@ export type UserRole = Database["public"]["Enums"]["user_role"] | null;
 type AuthContextValue = {
   profile: ProfileRow | null;
   role: UserRole;
-  loading: boolean; // lagi cek session / profile
-  isAuthenticated: boolean; // true = ada session Supabase
+  loading: boolean; // true = lagi cek session/profile
+  isAuthenticated: boolean; // true kalau ada session Supabase
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
+  const [hasSession, setHasSession] = useState(false); // <= NEW
 
   const loadProfile = async () => {
     try {
@@ -39,13 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { session },
       } = await supabase.auth.getSession();
 
+      // === sumber truth: ada session atau nggak ===
+      setHasSession(!!session);
+
       if (!session) {
-        setHasSession(false);
         setProfile(null);
         return;
       }
-
-      setHasSession(true);
 
       const { data, error } = await supabase
         .from("profiles")
@@ -53,9 +54,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("id", session.user.id)
         .single();
 
-      if (error || !data) {
+      if (error) {
         console.error("Load profile error:", error);
-        // ada session tapi belum ada profile → anggap login, profile null
+        // tetap anggap login (karena session ada), tapi profile belum kebaca
+        setProfile(null);
+        return;
+      }
+
+      if (!data) {
+        // tidak ada row profiles, tapi session ada
+        console.warn(
+          "[useAuth] Session ada tapi row profiles tidak ditemukan untuk user",
+          session.user.id
+        );
         setProfile(null);
         return;
       }
@@ -75,13 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        // update flag session
+        setHasSession(!!session);
+
         if (!session) {
-          setHasSession(false);
           setProfile(null);
           setLoading(false);
         } else {
-          setHasSession(true);
-          loadProfile();
+          // session baru → muat ulang profile
+          void loadProfile();
         }
       }
     );
@@ -103,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     role: profile?.role ?? null,
     loading,
-    isAuthenticated: hasSession,
+    isAuthenticated: hasSession, // <= PENTING: pakai session, bukan !!profile
     signOut: handleSignOut,
     refreshProfile: loadProfile,
   };
