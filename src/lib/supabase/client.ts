@@ -1,5 +1,8 @@
 // src/lib/supabase/client.ts
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+"use client";
+
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/db";
 
 export type TypedSupabaseClient = SupabaseClient<Database>;
@@ -11,12 +14,14 @@ let browserClient: TypedSupabaseClient | null = null;
 
 export function getSupabaseBrowserClient(): TypedSupabaseClient {
     if (!browserClient) {
-        browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+        browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
             auth: {
+                flowType: "pkce",
+                autoRefreshToken: true,
                 persistSession: true,
-                detectSessionInUrl: false,
             },
         });
     }
+
     return browserClient;
 }

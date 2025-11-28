@@ -1,53 +1,61 @@
-// src/lib/supabase-server.ts
-import { cookies } from "next/headers";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import type { SupabaseClient, PostgrestError } from "@supabase/supabase-js";
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "@/types/db";
 
-export type TypedServerClient = SupabaseClient<Database>;
+const LOGIN_PATH = "/sign-in";
 
-// NOTE: sekarang async karena cookies() → Promise
-export async function getSupabaseServerClient(): Promise<TypedServerClient> {
-    const cookieStore = await cookies();
+export async function middleware(req: NextRequest) {
+    const res = NextResponse.next();
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // pakai helper resmi Supabase
+    const supabase = createMiddlewareClient<Database>({ req, res });
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error(
-            "Supabase env (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY) belum di-set"
-        );
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
+
+    const url = req.nextUrl;
+    const { pathname, searchParams } = url;
+
+    const isProtected =
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/findings") ||
+        pathname.startsWith("/report") ||
+        pathname.startsWith("/tasks");
+
+    const isAuthPage = pathname === LOGIN_PATH;
+    const isLoggedIn = !!session;
+
+    // sudah login tapi buka /sign-in → redirect ke redirect param / /findings
+    if (isAuthPage && isLoggedIn) {
+        const redirectParam = searchParams.get("redirect");
+        const target =
+            redirectParam && redirectParam.startsWith("/")
+                ? redirectParam
+                : "/findings";
+
+        return NextResponse.redirect(new URL(target, req.url));
     }
 
-    const client = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-            get(name: string) {
-                return cookieStore.get(name)?.value;
-            },
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            set(name: string, value: string, options: CookieOptions) {
-                // no-op (Next middleware yang handle)
-            },
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            remove(name: string, options: CookieOptions) {
-                // no-op
-            },
-        },
-    });
-
-    return client;
-}
-
-export function formatSupabaseError(
-    error: PostgrestError | null
-): string | null {
-    if (!error) return null;
-    if (error.details) {
-        return `${error.message} – ${error.details}`;
+    // belum login & akses protected → paksa ke sign-in
+    if (isProtected && !isLoggedIn) {
+        const loginUrl = new URL(LOGIN_PATH, req.url);
+        loginUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(loginUrl);
     }
-    return error.message;
+
+    // penting: selalu return res yang sudah di-*wrap* Supabase
+    return res;
 }
 
-export function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export const config = {
+    matcher: [
+        "/admin/:path*",
+        "/findings/:path*",
+        "/report/:path*",
+        "/tasks/:path*",
+        "/sign-in",
+    ],
+};
