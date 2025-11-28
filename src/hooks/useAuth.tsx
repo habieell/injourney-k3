@@ -38,10 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const {
         data: { session },
+        error: sessionError,
       } = await supabase.auth.getSession();
 
-      // === sumber truth: ada session atau nggak ===
-      setHasSession(!!session);
+      console.log("[useAuth] session in browser:", session, sessionError);
 
       if (!session) {
         setProfile(null);
@@ -54,19 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("id", session.user.id)
         .single();
 
-      if (error) {
-        console.error("Load profile error:", error);
-        // tetap anggap login (karena session ada), tapi profile belum kebaca
-        setProfile(null);
-        return;
-      }
+      console.log("[useAuth] profile result:", { data, error });
 
-      if (!data) {
-        // tidak ada row profiles, tapi session ada
-        console.warn(
-          "[useAuth] Session ada tapi row profiles tidak ditemukan untuk user",
-          session.user.id
-        );
+      if (error || !data) {
+        console.error("Load profile error:", error);
         setProfile(null);
         return;
       }
@@ -75,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("loadProfile error:", err);
       setProfile(null);
-      setHasSession(false);
     } finally {
       setLoading(false);
     }
