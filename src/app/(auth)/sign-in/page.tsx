@@ -14,8 +14,8 @@ export default function SignInPage() {
 
   const redirectParam = searchParams.get("redirect");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("inspector@injourney.com");
+  const [password, setPassword] = useState("pass1234");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 

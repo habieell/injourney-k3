@@ -32,6 +32,9 @@ export function AuthGuard({
       requireAuth,
     });
 
+    console.log("requireAuth : ", requireAuth);
+    console.log("isAuthenticated : ", isAuthenticated);
+
     if (requireAuth && !isAuthenticated) {
       router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
       return;
