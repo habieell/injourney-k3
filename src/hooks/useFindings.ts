@@ -46,7 +46,6 @@ export function useFindings(): UseFindingsResult {
                 setError(null);
 
                 const supabase = getSupabaseBrowserClient();
-                console.log('supabase', supabase);
 
                 const { data, error } = await supabase
                     .from("findings")
