@@ -2,14 +2,12 @@
 "use client";
 
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import TaskList from "@/components/task/TaskList";
+import { TasksPageView } from "@/features/tasks/pages/TasksPageView";
 
-export default function TasksPage() {
+export default function TasksRoutePage() {
   return (
     <AuthGuard allowedRoles={["admin", "inspector", "pic", "viewer"]}>
-      <main className="min-h-[calc(100vh-4rem)] bg-page pb-14 pt-6 md:min-h-[calc(100vh-4.5rem)] md:pt-8">
-        <TaskList />
-      </main>
+      <TasksPageView />
     </AuthGuard>
   );
 }

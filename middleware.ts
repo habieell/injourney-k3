@@ -6,9 +6,7 @@ const LOGIN_PATH = "/sign-in";
 // Deteksi cookie session Supabase (sb-xxx-auth-token)
 function hasSupabaseSession(req: NextRequest) {
     const allCookies = req.cookies.getAll();
-    return allCookies.some((cookie) =>
-        /^sb-.*-auth-token$/.test(cookie.name)
-    );
+    return allCookies.some((cookie) => /^sb-.*-auth-token$/.test(cookie.name));
 }
 
 export function middleware(req: NextRequest) {
@@ -18,12 +16,12 @@ export function middleware(req: NextRequest) {
     const isProtected =
         pathname.startsWith("/admin") ||
         pathname.startsWith("/findings") ||
-        pathname.startsWith("/report");
+        pathname.startsWith("/report") ||
+        pathname.startsWith("/tasks"); // ⬅️ tambahin ini
 
     const isAuthPage = pathname === LOGIN_PATH;
     const isLoggedIn = hasSupabaseSession(req);
 
-    // sudah login tapi buka /sign-in → lempar ke redirect (kalau ada) atau /findings
     if (isAuthPage && isLoggedIn) {
         const redirectParam = searchParams.get("redirect");
         const target =
@@ -34,7 +32,6 @@ export function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL(target, req.url));
     }
 
-    // belum login, akses protected → lempar ke /sign-in?redirect=<path>
     if (isProtected && !isLoggedIn) {
         const loginUrl = new URL(LOGIN_PATH, req.url);
         loginUrl.searchParams.set("redirect", pathname);
@@ -45,5 +42,11 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/admin/:path*", "/findings/:path*", "/report/:path*", "/sign-in"],
+    matcher: [
+        "/admin/:path*",
+        "/findings/:path*",
+        "/report/:path*",
+        "/tasks/:path*",
+        "/sign-in",
+    ],
 };

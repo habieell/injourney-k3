@@ -190,6 +190,7 @@ export type Database = {
                     terminal_id: string;
                     zone_id: string;
                     location_id: string;
+                    location_text: string | null;
                     inspection_date: string; // date
                     shift: Database["public"]["Enums"]["shift_type"];
                     start_time: string | null; // time
@@ -215,7 +216,8 @@ export type Database = {
                     airport_id: string;
                     terminal_id: string;
                     zone_id: string;
-                    location_id: string;
+                    location_id?: string | null;
+                    location_text?: string | null;
                     inspection_date: string;
                     shift: Database["public"]["Enums"]["shift_type"];
                     start_time?: string | null;
@@ -241,7 +243,8 @@ export type Database = {
                     airport_id?: string;
                     terminal_id?: string;
                     zone_id?: string;
-                    location_id?: string;
+                    location_id?: string | null;
+                    location_text?: string | null;
                     inspection_date?: string;
                     shift?: Database["public"]["Enums"]["shift_type"];
                     start_time?: string | null;

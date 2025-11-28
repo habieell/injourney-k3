@@ -1,7 +1,7 @@
 // src/lib/supabase-server.ts
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, PostgrestError } from "@supabase/supabase-js";
 import type { Database } from "@/types/db";
 
 export type TypedServerClient = SupabaseClient<Database>;
@@ -26,20 +26,17 @@ export async function getSupabaseServerClient(): Promise<TypedServerClient> {
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             set(name: string, value: string, options: CookieOptions) {
-                // no-op
+                // no-op (Next middleware yang handle)
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             remove(name: string, options: CookieOptions) {
                 // no-op
             },
-
         },
     });
 
     return client;
 }
-
-import type { PostgrestError } from "@supabase/supabase-js";
 
 export function formatSupabaseError(
     error: PostgrestError | null
