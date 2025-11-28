@@ -6,7 +6,7 @@ import ReportPageView from "@/features/report/pages/ReportPageView";
 
 export default function ReportRoutePage() {
   return (
-    <AuthGuard allowedRoles={["admin", "inspector"]}>
+    <AuthGuard requireAuth allowedRoles={["admin", "inspector"]}>
       <ReportPageView />
     </AuthGuard>
   );

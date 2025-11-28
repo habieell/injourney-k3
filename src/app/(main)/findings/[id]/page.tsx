@@ -5,7 +5,10 @@ import { FindingDetailPageView } from "@/features/findings/pages/FindingDetailPa
 
 export default function FindingDetailPage() {
   return (
-    <AuthGuard allowedRoles={["admin", "inspector", "pic", "viewer"]}>
+    <AuthGuard
+      requireAuth
+      allowedRoles={["admin", "inspector", "pic", "viewer"]}
+    >
       <FindingDetailPageView />
     </AuthGuard>
   );
