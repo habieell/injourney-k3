@@ -521,3 +521,39 @@ body {
          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
          bg-white;
 }
+
+/* Loader khusus update status temuan */
+.finding-status-loader-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.finding-status-loader-text {
+  font-weight: 500;
+  font-size: 11px;
+  color: #0f172a; /* slate-900 kurang lebih */
+}
+
+.finding-status-loader {
+  overflow: visible;
+  height: fit-content;
+  width: fit-content;
+  display: flex;
+}
+
+.finding-status-logo {
+  fill: none;
+  stroke-dasharray: 20px; /* main number */
+  stroke: currentColor;
+  animation: finding-status-load 1.5s infinite linear;
+}
+
+@keyframes finding-status-load {
+  0% {
+    stroke-dashoffset: 0px;
+  }
+  100% {
+    stroke-dashoffset: 200px; /* 10x dari 20px */
+  }
+}

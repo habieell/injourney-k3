@@ -3,26 +3,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { useFindingDetail } from "@/hooks/useFindingDetail";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { can, getRoleFromProfile } from "@/lib/auth/permission";
-
-function statusLabel(status: string | null | undefined) {
-  switch (status) {
-    case "open":
-      return "Open";
-    case "in_progress":
-      return "In Progress";
-    case "closed":
-      return "Closed";
-    default:
-      return status ?? "-";
-  }
-}
 
 type TaskStatus = "open" | "in_progress" | "done";
 
@@ -38,6 +25,7 @@ export function FindingDetailPageView() {
   const params = useParams<{ id: string }>();
   const id = typeof params?.id === "string" ? params.id : "";
 
+  const router = useRouter();
   const { profile } = useAuth();
   const role = getRoleFromProfile(profile);
 
@@ -72,15 +60,13 @@ export function FindingDetailPageView() {
       ? finding.severity.toUpperCase()
       : "-";
 
-  // ===== PERMISSION =====
   const canUpdateAny = can.updateAnyFinding(role);
   const canUpdateAssigned = can.updateAssignedFinding(role);
   const canUpdateStatus = canUpdateAny || canUpdateAssigned;
 
-  // id temuan yang stabil
   const findingId: string | null = finding?.id ?? null;
 
-  // ===== CEK APAKAH SUDAH ADA TASK UNTUK FINDING INI =====
+  // ===== CEK TASK TERKAIT FINDING =====
   useEffect(() => {
     if (!findingId) {
       setHasAnyTask(false);
@@ -121,7 +107,7 @@ export function FindingDetailPageView() {
     };
   }, [findingId, supabase]);
 
-  // === UPDATE STATUS KE SUPABASE (FINDING + TASKS) ===
+  // ===== UPDATE STATUS FINDING + TASKS =====
   const handleUpdateStatus = async (
     newStatus: "open" | "in_progress" | "closed"
   ) => {
@@ -136,13 +122,15 @@ export function FindingDetailPageView() {
     try {
       setUpdating(true);
 
+      const idForQuery = findingId as string;
+
       const { error: updateError } = await supabase
         .from("findings")
         .update({
           status: newStatus,
           closed_at: newStatus === "closed" ? new Date().toISOString() : null,
         })
-        .eq("id", findingId);
+        .eq("id", idForQuery);
 
       if (updateError) {
         throw updateError;
@@ -152,7 +140,7 @@ export function FindingDetailPageView() {
       const { error: tasksError } = await supabase
         .from("tasks")
         .update({ status: mappedTaskStatus })
-        .eq("finding_id", findingId);
+        .eq("finding_id", idForQuery);
 
       if (tasksError) {
         console.error(
@@ -161,7 +149,8 @@ export function FindingDetailPageView() {
         );
       }
 
-      window.location.reload();
+      // Refresh data tanpa full reload
+      router.refresh();
     } catch (err: unknown) {
       console.error("Update status error:", err);
       alert("Gagal mengupdate status temuan.");
@@ -222,19 +211,19 @@ export function FindingDetailPageView() {
                   {finding.status === "open" && (
                     <span className="inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger/5 px-3 py-1 text-[11px] font-medium text-danger">
                       <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-                      {statusLabel(finding.status)}
+                      Open
                     </span>
                   )}
                   {finding.status === "in_progress" && (
                     <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/5 px-3 py-1 text-[11px] font-medium text-warning">
                       <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-                      {statusLabel(finding.status)}
+                      In Progress
                     </span>
                   )}
                   {finding.status === "closed" && (
                     <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/5 px-3 py-1 text-[11px] font-medium text-success">
                       <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                      {statusLabel(finding.status)}
+                      Closed
                     </span>
                   )}
                 </>
@@ -254,6 +243,7 @@ export function FindingDetailPageView() {
                   {canUpdateStatus && (
                     <>
                       <button
+                        type="button"
                         disabled={updating || finding.status === "open"}
                         onClick={() => handleUpdateStatus("open")}
                         className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
@@ -261,6 +251,7 @@ export function FindingDetailPageView() {
                         Tandai Open
                       </button>
                       <button
+                        type="button"
                         disabled={updating || finding.status === "in_progress"}
                         onClick={() => handleUpdateStatus("in_progress")}
                         className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
@@ -268,6 +259,7 @@ export function FindingDetailPageView() {
                         Tandai In Progress
                       </button>
                       <button
+                        type="button"
                         disabled={updating || finding.status === "closed"}
                         onClick={() => handleUpdateStatus("closed")}
                         className="rounded-full border border-emerald-500 bg-emerald-500 px-3 py-1 text-[11px] font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
